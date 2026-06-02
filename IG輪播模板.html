@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>BUSINION CHAMBER — INSTAGRAM CAROUSEL OPERATING SYSTEM v5</title>
+
+    <!-- External Dependencies -->
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;700;800&family=Noto+Serif+TC:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+
+        *, *::before, *::after {
+
+            box-sizing: border-box;
+
+        }
+
+        body {
+
+            margin: 0;
+
+            padding: 0;
+
+            background-color: #ECE7E1;
+
+            font-family: 'Montserrat', 'Noto Serif TC', serif;
+
+            color: #2A120D;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            padding: 40px 20px;
+
+        }
+
+        .control-panel {
+
+            width: 1240px;
+
+            max-width: 100%;
+
+            background-color: #F6F1EB;
+
+            border: 3px solid #2A120D;
+
+            padding: 24px;
+
+            margin-bottom: 40px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            box-shadow: 8px 8px 0px #2A120D;
+
+        }
+
+        .brand-info h1 {
+
+            font-family: 'Noto Serif TC', serif;
+
+            font-weight: 900;
+
+            font-size: 24px;
+
+            margin: 0;
+
+            color: #711900;
+
+            letter-spacing: 1px;
+
+        }
+
+        .brand-info p {
+
+            font-family: 'Montserrat', sans-serif;
+
+            margin: 4px 0 0 0;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            color: #2A120D;
+
+            letter-spacing: 2px;
+
+        }
+
+        .export-btn {
+
+            background-color: #711900;
+
+            color: #F6F1EB;
+
+            border: 3px solid #2A120D;
+
+            padding: 14px 36px;
+
+            font-family: 'Montserrat', sans-serif;
+
+            font-weight: 800;
+
+            font-size: 16px;
+
+            letter-spacing: 1px;
+
+            cursor: pointer;
+
+            box-shadow: 4px 4px 0px #2A120D;
+
+            transition: all 0.1s ease;
+
+        }
+
+        .export-btn:hover {
+
+            transform: translate(-2px, -2px);
+
+            box-shadow: 6px 6px 0px #2A120D;
+
+        }
+
+        .export-btn:active {
+
+            transform: translate(2px, 2px);
+
+            box-shadow: 2px 2px 0px #2A120D;
+
+        }
+
+        .export-btn:disabled {
+
+            background-color: #C9A063;
+
+            color: #0F0B09;
+
+            cursor: not-allowed;
+
+            transform: none;
+
+            box-shadow: 2px 2px 0px #2A120D;
+
+        }
+
+        
+
+        /* Carousel Container and Scaling Law */
+
+        .carousel-container {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 30px;
+
+            justify-content: center;
+
+            width: 1240px;
+
+            max-width: 100%;
+
+        }
+
+        .slide-box {
+
+            width: 400px;
+
+            height: 500px;
+
+            border: 3px solid #2A120D;
+
+            box-shadow: 6px 6px 0px #2A120D;
+
+            overflow: hidden;
+
+            position: relative;
+
+            background-color: #0F0B09;
+
+        }
+
+        
+
+        /* The Canvas System: Core 1080 x 1350 */
+
+        .slide {
+
+            width: 1080px;
+
+            height: 1350px;
+
+            position: absolute;
+
+            top: 0;
+
+            left: 0;
+
+            transform: scale(0.37037037); /* 400/1080 */
+
+            transform-origin: top left;
+
+            box-sizing: border-box;
+
+            padding: 90px 80px 80px 80px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            justify-content: space-between;
+
+            z-index: 1;
+
+        }
+
+        
+
+        /* Colors Matrix */
+
+        .bg-paper { background-color: #F6F1EB; color: #2A120D; }
+
+        .bg-canvas { background-color: #ECE7E1; color: #2A120D; }
+
+        .bg-void { background-color: #0F0B09; color: #F6F1EB; }
+
+        .bg-crimson { background-color: #711900; color: #F6F1EB; }
+
+        
+
+        /* Structural Elements */
+
+        .slide-header {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            width: 100%;
+
+            z-index: 10;
+
+        }
+
+        .brand-handle {
+
+            font-family: 'Montserrat', sans-serif;
+
+            font-weight: 800;
+
+            font-size: 24px;
+
+            letter-spacing: 0.5px;
+
+        }
+
+        .category-badge {
+
+            font-family: 'Noto Serif TC', serif;
+
+            font-weight: 700;
+
+            font-size: 22px;
+
+            border: 2px solid currentColor;
+
+            padding: 4px 12px;
+
+            letter-spacing: 1px;
+
+        }
+
+        
+
+        .slide-content {
+
+            flex-grow: 1;
+
+            display: flex;
+
+            flex-direction: column;
+
+            justify-content: center;
+
+            position: relative;
+
+            width: 100%;
+
+            z-index: 5;
+
+        }
+
+        
+
+        .slide-footer {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            width: 100%;
+
+            font-family: 'Montserrat', sans-serif;
+
+            font-weight: 800;
+
+            font-size: 22px;
+
+            letter-spacing: 1px;
+
+            z-index: 10;
+
+        }
+
+        .slide-footer .center-index {
+
+            font-weight: 300;
+
+            font-size: 20px;
+
+        }
+
+        .slide-footer .right-nav {
+
+            font-size: 28px;
+
+            display: flex;
+
+            align-items: center;
+
+        }
+
+        
+
+        /* Typography System (Mobile Readability Law) */
+
+        .hero-title {
+
+            font-family: 'Noto Serif TC', serif;
+
+            font-weight: 900;
+
+            font-size: 92px;
+
+            line-height: 1.15;
+
+            margin: 0 0 35px 0;
+
+            letter-spacing: -1px;
+
+        }
+
+        .hero-subtitle {
+
+            font-family: 'Noto Serif TC', serif;
+
+            font-weight: 700;
+
+            font-size: 38px;
+
+            line-height: 1.45;
+
+            margin: 0;
+
+            color: #C9A063;
+
+        }
+
+        .bg-void .hero-subtitle { color: #C9A063; }
+
+        .bg-paper .hero-subtitle { color: #711900; }
+
+        
+
+        .section-title {
+
+            font-family: 'Noto Serif TC', serif;
+
+            font-weight: 900;
+
+            font-size: 72px;
+
+            line-height: 1.25;
+
+            margin: 0 0 45px 0;
+
+            letter-spacing: -0.5px;
+
+        }
+
+        .bg-paper .section-title { color: #711900; }
+
+        .bg-crimson .section-title { color: #C9A063; }
+
+        .bg-void .section-title { color: #C9A063; }
+
+        
+
+        .body-text {
+
+            font-family: 'Noto Serif TC', serif;
+
+            font-weight: 400;
+
+            font-size: 34px;
+
+            line-height: 1.6;
+
+            margin: 0;
+
+        }
+
+        .body-text strong {
+
+            font-weight: 700;
+
+        }
+
+        .highlight-crimson { color: #711900; font-weight: 700; }
+
+        .highlight-gold { color: #C9A063; font-weight: 700; }
+
+        
+
+        /* Layout Variations & Components */
+
+        .anti-monotony-box {
+
+            border-left: 6px solid currentColor;
+
+            padding-left: 25px;
+
+            margin: 20px 0;
+
+        }
+
+        
+
+        .oversized-bg-number {
+
+            position: absolute;
+
+            font-family: 'Montserrat', sans-serif;
+
+            font-weight: 800;
+
+            font-size: 480px;
+
+            line-height: 1;
+
+            right: -40px;
+
+            bottom: 40px;
+
+            opacity: 0.06;
+
+            z-index: 1;
+
+            pointer-events: none;
+
+        }
+
+        .bg-crimson .oversized-bg-number { opacity: 0.12; color: #C9A063; }
+
+        
+
+        .grid-list {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 30px;
+
+        }
+
+        .grid-item {
+
+            display: flex;
+
+            align-items: flex-start;
+
+            gap: 20px;
+
+        }
+
+        .grid-num {
+
+            font-family: 'Montserrat', sans-serif;
+
+            font-weight: 800;
+
+            font-size: 42px;
+
+            line-height: 1;
+
+            margin-top: 5px;
+
+        }
+
+        .grid-content {
+
+            flex: 1;
+
+        }
+
+        .grid-content h4 {
+
+            margin: 0 0 10px 0;
+
+            font-size: 36px;
+
+            font-family: 'Noto Serif TC', serif;
+
+            font-weight: 700;
+
+        }
+
+        .grid-content p {
+
+            margin: 0;
+
+            font-size: 30px;
+
+            line-height: 1.5;
+
+            opacity: 0.9;
+
+        }
+
+        
+
+        .checklist {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 35px;
+
+        }
+
+        .checklist-item {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 25px;
+
+            font-size: 34px;
+
+            font-family: 'Noto Serif TC', serif;
+
+        }
+
+        .checklist-item i {
+
+            font-size: 40px;
+
+            color: #711900;
+
+        }
+
+        .bg-void .checklist-item i { color: #C9A063; }
+
+        
+
+        /* Copy Area Zone */
+
+        .copy-zone {
+
+            width: 1240px;
+
+            max-width: 100%;
+
+            background-color: #F6F1EB;
+
+            border: 3px solid #2A120D;
+
+            padding: 30px;
+
+            margin-top: 40px;
+
+            box-shadow: 8px 8px 0px #2A120D;
+
+        }
+
+        .copy-zone h2 {
+
+            font-family: 'Noto Serif TC', serif;
+
+            font-weight: 900;
+
+            font-size: 22px;
+
+            margin: 0 0 15px 0;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            color: #711900;
+
+            border-bottom: 2px solid #2A120D;
+
+            padding-bottom: 10px;
+
+        }
+
+        .copy-textarea {
+
+            width: 100%;
+
+            height: 250px;
+
+            background-color: #ECE7E1;
+
+            border: 2px solid #2A120D;
+
+            padding: 15px;
+
+            font-family: 'Montserrat', 'Noto Serif TC', monospace;
+
+            font-size: 14px;
+
+            line-height: 1.6;
+
+            color: #2A120D;
+
+            resize: none;
+
+            margin-bottom: 15px;
+
+            outline: none;
+
+        }
+
+        .copy-btn {
+
+            background-color: #C9A063;
+
+            color: #0F0B09;
+
+            border: 2px solid #2A120D;
+
+            padding: 10px 24px;
+
+            font-weight: 800;
+
+            font-size: 14px;
+
+            cursor: pointer;
+
+            box-shadow: 3px 3px 0px #2A120D;
+
+            transition: all 0.1s ease;
+
+        }
+
+        .copy-btn:hover {
+
+            transform: translate(-1px, -1px);
+
+            box-shadow: 4px 4px 0px #2A120D;
+
+        }
+
+        .copy-btn:active {
+
+            transform: translate(1px, 1px);
+
+            box-shadow: 1px 1px 0px #2A120D;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <!-- Control Header -->
+
+    <div class="control-panel">
+
+        <div class="brand-info">
+
+            <h1>聚商匯 Businion Chamber</h1>
+
+            <p>INSTAGRAM CAROUSEL OPERATING SYSTEM v5</p>
+
+        </div>
+
+        <button class="export-btn" id="export-btn" onclick="exportAll()">EXPORT ALL</button>
+
+    </div>
+
+
+
+    <!-- Carousel Stream Layout -->
+
+    <div class="carousel-container">
+
+        
+
+        <!-- SLIDE 1: COVER -->
+
+        <div class="slide-box">
+
+            <div class="slide bg-void" id="slide-1">
+
+                <div class="slide-header">
+
+                    <span class="brand-handle">@businion.c</span>
+
+                    <span class="category-badge">D 商業模式</span>
+
+                </div>
+
+                <div class="slide-content">
+
+                    <h2 class="hero-title">美國開公司<br>稅率差一倍？</h2>
+
+                    <p class="hero-subtitle">創業者必懂的 IRS Form 8832 稅務隱形開關</p>
+
+                </div>
+
+                <div class="slide-footer">
+
+                    <span>SHARE</span>
+
+                    <span class="center-index">1 / 8</span>
+
+                    <span class="right-nav">SAVE &nbsp;<i class="fa-solid fa-arrow-right"></i></span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- SLIDE 2: PROBLEM -->
+
+        <div class="slide-box">
+
+            <div class="slide bg-paper" id="slide-2">
+
+                <div class="slide-header">
+
+                    <span class="brand-handle">@businion.c</span>
+
+                    <span class="category-badge">商業痛點</span>
+
+                </div>
+
+                <div class="slide-content">
+
+                    <h3 class="section-title">成立了 LLC<br>就自動省稅？</h3>
+
+                    <div class="body-text">
+
+                        <p>很多老闆到美國開拓市場，盲目以為選了 LLC 就能自動享受轉嫁稅制（Pass-through）。</p>
+
+                        <div class="anti-monotony-box">
+
+                            <p>真相是：若沒有主動遞交 <span class="highlight-crimson">Form 8832</span>，國稅局將自動依預設規則課稅，可能讓你平白遭逢高額的企業稅重擊！</p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="slide-footer">
+
+                    <span>SHARE</span>
+
+                    <span class="center-index">2 / 8</span>
+
+                    <span class="right-nav">SAVE &nbsp;<i class="fa-solid fa-arrow-right"></i></span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- SLIDE 3: TRUTH -->
+
+        <div class="slide-box">
+
+            <div class="slide bg-canvas" id="slide-3">
+
+                <div class="slide-header">
+
+                    <span class="brand-handle">@businion.c</span>
+
+                    <span class="category-badge">核心定義</span>
+
+                </div>
+
+                <div class="oversized-bg-number">8832</div>
+
+                <div class="slide-content">
+
+                    <h3 class="section-title">什麼是 Form 8832？</h3>
+
+                    <div class="body-text">
+
+                        <p>這是美國國稅局（IRS）的<strong class="highlight-crimson">「實體分類選擇 (Entity Classification Election)」</strong>表格。</p>
+
+                        <p style="margin-top: 20px;">它賦予合規企業一項頂層特權：<br><strong>你可以自己決定你的公司要以何種身份被課稅。</strong></p>
+
+                    </div>
+
+                </div>
+
+                <div class="slide-footer">
+
+                    <span>SHARE</span>
+
+                    <span class="center-index">3 / 8</span>
+
+                    <span class="right-nav">SAVE &nbsp;<i class="fa-solid fa-arrow-right"></i></span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- SLIDE 4: MECHANISM -->
+
+        <div class="slide-box">
+
+            <div class="slide bg-paper" id="slide-4">
+
+                <div class="slide-header">
+
+                    <span class="brand-handle">@businion.c</span>
+
+                    <span class="category-badge">預設律法</span>
+
+                </div>
+
+                <div class="slide-content">
+
+                    <h3 class="section-title">IRS 的預設分類規則</h3>
+
+                    <div class="grid-list">
+
+                        <div class="grid-item">
+
+                            <div class="grid-num" style="color:#711900;">01</div>
+
+                            <div class="grid-content">
+
+                                <h4>單人 LLC 預設</h4>
+
+                                <p>被視為<strong>「不列入獨立宣告的個體 (Disregarded Entity)」</strong>，稅務直接穿透至個人。</p>
+
+                            </div>
+
+                        </div>
+
+                        <div class="grid-item">
+
+                            <div class="grid-num" style="color:#711900;">02</div>
+
+                            <div class="grid-content">
+
+                                <h4>多人 LLC 預設</h4>
+
+                                <p>被視為<strong>「合夥企業 (Partnership)」</strong>申報。</p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <p class="body-text" style="margin-top: 40px; font-size: 28px; opacity: 0.85;">※ 若想打破上述預設改選為 C-Corp（公司課稅），就必須透過 8832 表格變更。</p>
+
+                </div>
+
+                <div class="slide-footer">
+
+                    <span>SHARE</span>
+
+                    <span class="center-index">4 / 8</span>
+
+                    <span class="right-nav">SAVE &nbsp;<i class="fa-solid fa-arrow-right"></i></span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- SLIDE 5: STRATEGIC FRAMEWORK -->
+
+        <div class="slide-box">
+
+            <div class="slide bg-canvas" id="slide-5">
+
+                <div class="slide-header">
+
+                    <span class="brand-handle">@businion.c</span>
+
+                    <span class="category-badge">三大效益</span>
+
+                </div>
+
+                <div class="slide-content">
+
+                    <h3 class="section-title">創業者為何必須改選？</h3>
+
+                    <div class="grid-list">
+
+                        <div class="grid-item">
+
+                            <div class="grid-num" style="color:#C9A063;">A</div>
+
+                            <div class="grid-content">
+
+                                <h4>阻絕雙重課稅風險</h4>
+
+                                <p>善用穿透性稅制，利潤直達個人，避免公司留存利潤與分紅被剝兩層皮。</p>
+
+                            </div>
+
+                        </div>
+
+                        <div class="grid-item">
+
+                            <div class="grid-num" style="color:#C9A063;">B</div>
+
+                            <div class="grid-content">
+
+                                <h4>隨規模彈性切換架構</h4>
+
+                                <p>早期用 LLC 節省合規成本，發展期透過 8832 改選為 C-Corp 以利創投融資。</p>
+
+                            </div>
+
+                        </div>
+
+                        <div class="grid-item">
+
+                            <div class="grid-num" style="color:#C9A063;">C</div>
+
+                            <div class="grid-content">
+
+                                <h4>跨境電商全球節稅</h4>
+
+                                <p>非美居民（Non-US Resident）能藉此完美架設合法的跨境稅務防火牆。</p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="slide-footer">
+
+                    <span>SHARE</span>
+
+                    <span class="center-index">5 / 8</span>
+
+                    <span class="right-nav">SAVE &nbsp;<i class="fa-solid fa-arrow-right"></i></span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- SLIDE 6: TIMING LAW -->
+
+        <div class="slide-box">
+
+            <div class="slide bg-crimson" id="slide-6">
+
+                <div class="slide-header">
+
+                    <span class="brand-handle">@businion.c</span>
+
+                    <span class="category-badge" style="color:#C9A063; border-color:#C9A063;">黃金時效</span>
+
+                </div>
+
+                <div class="oversized-bg-number">75</div>
+
+                <div class="slide-content">
+
+                    <h3 class="section-title">錯過黃金 75 天<br>直接失效！</h3>
+
+                    <div class="body-text">
+
+                        <p>Form 8832 的生效日期判定極其殘酷，沒有妥協空間：</p>
+
+                        <div class="anti-monotony-box" style="border-color:#C9A063;">
+
+                            <p>● <strong>最長追溯期</strong>：不能超過遞交前的 <span class="highlight-gold">75 天</span>。<br>● <strong>最長未來期</strong>：不能超過遞交後的 <span class="highlight-gold">12 個月</span>。</p>
+
+                        </div>
+
+                        <p style="margin-top: 20px;">逾期遞交將導致當年度無法變更身份，全盤打亂節稅佈局！</p>
+
+                    </div>
+
+                </div>
+
+                <div class="slide-footer">
+
+                    <span>SHARE</span>
+
+                    <span class="center-index">6 / 8</span>
+
+                    <span class="right-nav">SAVE &nbsp;<i class="fa-solid fa-arrow-right"></i></span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- SLIDE 7: CHECKLIST -->
+
+        <div class="slide-box">
+
+            <div class="slide bg-paper" id="slide-7">
+
+                <div class="slide-header">
+
+                    <span class="brand-handle">@businion.c</span>
+
+                    <span class="category-badge">實戰清單</span>
+
+                </div>
+
+                <div class="slide-content">
+
+                    <h3 class="section-title">遞交前的必備清單</h3>
+
+                    <div class="checklist">
+
+                        <div class="checklist-item">
+
+                            <i class="fa-regular fa-square-check"></i>
+
+                            <span>確保已取得正確的 <strong>EIN 雇主識別號</strong></span>
+
+                        </div>
+
+                        <div class="checklist-item">
+
+                            <i class="fa-regular fa-square-check"></i>
+
+                            <span>完整取得所有合夥人或授權經理人簽名</span>
+
+                        </div>
+
+                        <div class="checklist-item">
+
+                            <i class="fa-regular fa-square-check"></i>
+
+                            <span>精準指定符合 75 天法則的生效日期</span>
+
+                        </div>
+
+                        <div class="checklist-item">
+
+                            <i class="fa-regular fa-square-check"></i>
+
+                            <span>寄送至指定 IRS 服務中心並<strong>留存雙掛號憑證</strong></span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="slide-footer">
+
+                    <span>SHARE</span>
+
+                    <span class="center-index">7 / 8</span>
+
+                    <span class="right-nav">SAVE &nbsp;<i class="fa-solid fa-arrow-right"></i></span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- SLIDE 8: CTA -->
+
+        <div class="slide-box">
+
+            <div class="slide bg-void" id="slide-8">
+
+                <div class="slide-header">
+
+                    <span class="brand-handle">@businion.c</span>
+
+                    <span class="category-badge" style="color:#C9A063; border-color:#C9A063;">頂層思維</span>
+
+                </div>
+
+                <div class="slide-content" style="text-align: center;">
+
+                    <h3 class="section-title" style="font-size: 80px; margin-bottom: 30px;">拿回你的<br><span style="color:#C9A063;">稅務主導權</span></h3>
+
+                    <p class="body-text" style="font-size: 32px; opacity: 0.95; padding: 0 40px; line-height: 1.7;">
+
+                        企業要持續增長，底層的架構必須先立於不敗之地。盲目跟風只會流失利潤。
+
+                    </p>
+
+                    <div style="background-color: #711900; color: #F6F1EB; border: 2px solid #C9A063; padding: 25px; margin-top: 45px; font-size: 30px; font-family:'Noto Serif TC'; font-weight:700;">
+
+                        下方留言「8832」<br>
+
+                        <span style="color:#C9A063; font-size:26px;">獲取《美股跨境稅務架構與節稅全攻略》</span>
+
+                    </div>
+
+                </div>
+
+                <div class="slide-footer">
+
+                    <span>SHARE</span>
+
+                    <span class="center-index">8 / 8</span>
+
+                    <span>SAVE</span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+
+
+    <!-- Instagram Copy Paste Area Section -->
+
+    <div class="copy-zone">
+
+        <h2><i class="fa-brands fa-instagram"></i> Instagram 貼文內文與標籤 (Caption & Hashtags) 複製專區</h2>
+
+        <textarea class="copy-textarea" id="copyText" readonly>🇺🇸 美國開公司，稅率竟然可以差到一倍以上？！
+
+很多中小企業主、跨境電商老闆在成立美國 LLC 後，以為就能自動享有最完美的省稅模式。
+
+
+
+真相是：如果你漏掉了 IRS 的這張「隱形神級表格」—— Form 8832，你可能會被自動歸類到不適合你的稅務身份，平白面臨高額的雙重課稅！
+
+
+
+💡 什麼是 Form 8832 (Entity Classification Election)？
+
+這是美國國稅局給創業者最頂層的特權。它讓你可以主動「自選」公司的稅務身份：是要當作公司 (C-Corp)、合夥企業 (Partnership) 還是透明實體 (Disregarded Entity) 來申報。
+
+
+
+掌握架構，才是真正可持續成長的商業系統！
+
+
+
+⏳ 必須注意的【黃金 75 天法則】：
+
+Form 8832 的生效日期判定極其嚴格，最多只能「追溯遞交前的 75 天」。錯過這個時間點，你當年度的節稅佈局將全數失效！
+
+
+
+你是正在佈局海外市場的企業主，還是跨境電商的創業者？
+
+調整底層架構，別讓辛苦賺來的利潤卡在稅務陷阱裡。
+
+
+
+🔥 限時福利：
+
+現在只要在下方留言【8832】
+
+系統將自動私訊你《美股跨境稅務架構與節稅全攻略》！
+
+
+
+喜歡這篇實戰教學嗎？
+
+👉 記得按讚、分享給身邊有需要的朋友
+
+📌 點擊右下角「收藏」隨時複習！
+
+
+
+@businion.c
+
+#聚商匯 #BusinionChamber #Form8832 #美國開公司 #跨境電商 #LLC節稅 #美國稅務 #創業思維 #商業模式 #企業架構 #中小企業主 #省稅攻略</textarea>
+
+        <button class="copy-btn" onclick="copyCaption()">複製內文</button>
+
+    </div>
+
+
+
+    <script>
+
+        function copyCaption() {
+
+            const copyText = document.getElementById("copyText");
+
+            copyText.select();
+
+            copyText.setSelectionRange(0, 99999);
+
+            document.execCommand("copy");
+
+            
+
+            const btn = document.querySelector('.copy-btn');
+
+            const originalText = btn.innerText;
+
+            btn.innerText = "✓ 已複製";
+
+            btn.style.backgroundColor = "#711900";
+
+            btn.style.color = "#F6F1EB";
+
+            
+
+            setTimeout(() => {
+
+                btn.innerText = originalText;
+
+                btn.style.backgroundColor = "#C9A063";
+
+                btn.style.color = "#0F0B09";
+
+            }, 2000);
+
+        }
+
+
+
+        async function exportAll() {
+
+            const btn = document.getElementById('export-btn');
+
+            btn.disabled = true;
+
+            
+
+            const totalSlides = 8;
+
+            const zip = new JSZip();
+
+            
+
+            for (let i = 1; i <= totalSlides; i++) {
+
+                btn.innerText = `EXPORTING ${i} / ${totalSlides}`;
+
+                const slide = document.getElementById(`slide-${i}`);
+
+                const box = slide.parentElement;
+
+                
+
+                // Canvas Export Law Setup: Remove transform for accurate high-res snapshot
+
+                slide.style.transform = 'none';
+
+                box.style.overflow = 'visible';
+
+                
+
+                try {
+
+                    const canvas = await html2canvas(slide, {
+
+                        scale: 4, // Ultra-sharp 4x export scaling
+
+                        useCORS: true,
+
+                        backgroundColor: null,
+
+                        logging: false,
+
+                        allowTaint: false,
+
+                        width: 1080,
+
+                        height: 1350
+
+                    });
+
+                    
+
+                    // Restore Layout System Styles immediately
+
+                    slide.style.transform = 'scale(0.37037037)';
+
+                    box.style.overflow = 'hidden';
+
+                    
+
+                    // Process images into zip package
+
+                    const dataUrl = canvas.toDataURL('image/png');
+
+                    const base64Data = dataUrl.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
+
+                    const filename = `businion_slide_${String(i).padStart(2, '0')}.png`;
+
+                    zip.file(filename, base64Data, {base64: true});
+
+                    
+
+                } catch (error) {
+
+                    console.error(`Error capturing slide ${i}:`, error);
+
+                    slide.style.transform = 'scale(0.37037037)';
+
+                    box.style.overflow = 'hidden';
+
+                }
+
+            }
+
+            
+
+            btn.innerText = '✓ DONE';
+
+            
+
+            zip.generateAsync({type: "blob"}).then(function(content) {
+
+                saveAs(content, "businion-carousel.zip");
+
+                
+
+                setTimeout(() => {
+
+                    btn.innerText = 'EXPORT ALL';
+
+                    btn.disabled = false;
+
+                }, 3000);
+
+            });
+
+        }
+
+    </script>
+
+</body>
+
+</html>
+
+
+
